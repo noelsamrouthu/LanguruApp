@@ -50,7 +50,7 @@ const SignUpScreen = () => {
         <CustomInput
           name="name"
           control={control}
-          placeholder="Name"
+          placeholder="Full Name"
           rules={{
             required: 'Name is required',
             minLength: {
@@ -115,6 +115,7 @@ const SignUpScreen = () => {
         <CustomButton
           text="Register"
           onPress={handleSubmit(onRegisterPressed)}
+          type="SECONDARY"
         />
 
         <Text style={styles.text}>

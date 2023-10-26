@@ -8,7 +8,9 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import Logo from '../../../assets/images/Logo_1.png';
+import Logo from '../../../assets/images/Logo_2.png';
+import Uicon from '../../../assets/images/UnameIcon.png'
+import PWicon from '../../../assets/images/PwordIcon.png'
 import CustomInput from '../../components/CustomInput';
 import CustomButton from '../../components/CustomButton';
 import SocialSignInButtons from '../../components/SocialSignInButtons';
@@ -77,7 +79,10 @@ const SignInScreen = ({navigation}) => {
           placeholder="Username"
           control={control}
           rules={{required: 'Username is required'}}
-        />
+          imageSource={Uicon} 
+          imageStyle={[styles.uicon]}
+          
+          />
         <CustomInput
           name="password"
           placeholder="Password"
@@ -85,6 +90,8 @@ const SignInScreen = ({navigation}) => {
           setValue={setPassword}
           secureTextEntry
           control={control}
+          imageSource={PWicon} 
+          imageStyle={[styles.pwicon]}
           rules={{
             required: 'Password is required',
             minlength: {
@@ -94,12 +101,17 @@ const SignInScreen = ({navigation}) => {
           }}
         />
 
-        <CustomButton text="Sign In" onPress={handleSubmit(onSignInPressed)} />
+        <CustomButton text="Sign In" onPress={handleSubmit(onSignInPressed)} 
+          type="SECONDARY"
+        />
 
         <CustomButton
+          
           text="Forgot password?"
           onPress={onForgotPasswordPressed}
           type="TERTIARY"
+          // imageSource={FwordIcon}
+          // imageStyle={[styles.fwicon]}          
         />
 
         <SocialSignInButtons />
@@ -107,7 +119,8 @@ const SignInScreen = ({navigation}) => {
         <CustomButton
           text="Don't have an account? Create one"
           onPress={onSignUpPress}
-          type="TERTIARY"
+          
+          
         />
       </View>
     </ScrollView>
@@ -124,6 +137,19 @@ const styles = StyleSheet.create({
     maxWidth: 300,
     maxHeight: 200,
   },
+
+  uicon:{
+    width: '10%',
+    marginRight: 2,
+  },
+  pwicon:{
+    width: '8%',
+    marginRight: 2,
+  },
+  fwicon:{
+    width:'10%'
+  }
+
 });
 
 export default SignInScreen;
