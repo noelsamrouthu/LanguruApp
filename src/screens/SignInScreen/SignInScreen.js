@@ -1,263 +1,212 @@
-import React,{useState} from 'react';
-import {View, Text, Alert, Image, Pressable} from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import { Card, Icon } from 'react-native-elements'
-import {SafeAreaView, StyleSheet, TextInput} from 'react-native';
-import { Table, TableWrapper, Row, Rows, Col, Cols, Cell } from 'react-native-table-component';
-import {useForm} from 'react-hook-form';
-import {Auth} from 'aws-amplify';
+import React, {useState,  useEffect, useRef} from 'react';
+import { Video } from 'expo-av';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  useWindowDimensions,
+  ScrollView,
+  Alert,
+} from 'react-native';
+import { Modal,ActivityIndicator,Animated} from 'react-native';
+import Logo from '../../../assets/images/Logo_3.png';
+import Uicon from '../../../assets/images/UnameIcon.png'
+import PWicon from '../../../assets/images/PwordIcon.png'
 import CustomInput from '../../components/CustomInput';
-import CustomButton from '../../components/CustomButton/index';
-import { ScrollView } from 'react-native';
-import Male from '../../../assets/male.png'
-import Female from '../../../assets/female.png'
-import Default from '../../../assets/default.png'
-import Cover from '../../../assets/Cover.jpg'
+import CustomButton from '../../components/CustomButton';
+import SocialSignInButtons from '../../components/SocialSignInButtons';
+import {useNavigation} from '@react-navigation/native';
+import { Auth } from 'aws-amplify';
+import {useForm, Controller} from 'react-hook-form';
+import { useRoute } from "@react-navigation/native";
 
 
-const EMAIL_REGEX = /^[A-Za-z0-9_!#$%&'*+\/=?`{|}~^.-]+@[A-Za-z0-9.-]+$/;
-const ProfileScreen = ({ route, navigation }) => {
-  const onSignOutPressed = async () => {
+const SignInScreen = ({navigation}) => {
+  const [username, setUsername] = useState();
+  const [password, setPassword] = useState();
+  const {control, handleSubmit, formState: {errors}} = useForm();
+
+  const {height} = useWindowDimensions();
+  // const navigation = useNavigation();
+  const [loading, setLoading] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+  }, [fadeAnim]);
+
+
+  const onSignInPressed = async data => {
+
     try {
-      await Auth.signOut();
-      navigation.replace('SignIn');
-    } catch (e) {
-      Alert.alert('Error', e.message);
-    }
-  };
-    const {control, handleSubmit} = useForm();
-    const [username, onChangeUserName] = React.useState(route.params.params.userName);
-    const [name, onChangeName] = React.useState(route.params.params.name);
-    const [email, onChangeEmail] = React.useState(route.params.params.email);
-    const [number, onChangeNumber] = React.useState(route.params.params.phone_number);
-    const [gender, setGender] = useState('Male');
-    const genderOptions = ['Male', 'Female', 'Other'];
+      const response = await Auth.signIn(data.username, data.password);
+      const userInfo = await Auth.currentUserInfo();
+      console.log(userInfo);
+      const userName = userInfo.username;
+      const name = userInfo.attributes.name;
+      const email = userInfo.attributes.email;
+      const phone_number = userInfo.attributes.phone_number;
 
-    const onUpdateProfilePress = async () => {
-        console.log(username);
-        console.log(email);
-        if(!validateEmail(email)) {
-            Alert.alert('Please enter a valid email.');
-        } else if(!username || !name) {
-            Alert.alert('Username and Name cannot be empty.');
-        } else {
-            try {
-                const user = await Auth.currentAuthenticatedUser();
-                await Auth.updateUserAttributes(user, {
-                    'preferred_username': username,
-                    'name': name,
-                    'email': email,
-                    'phone_number': number,
-                });
-                Alert.alert('Successfully updated profile.');
-            } catch (e) {
-                Alert.alert('Error', e.message);
-            }
+      navigation.navigate('TabNavigator', {
+        screen: 'Home',
+        params: {
+          userName: userName,
+          name: name,
+          email: email,
+          phone_number: phone_number,
         }
+      });
+    } catch(e) {
+      Alert.alert('Oops', e.message);
     }
 
-    const validateEmail = (text) => {
-        return EMAIL_REGEX.test(text);
-    };
-   
-    return (
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.container}>
-      <Image
-            source={Cover}
-            style={styles.coverImage}
+  };
 
-            />
+  const onForgotPasswordPressed = () => {
+    navigation.navigate('ForgotPassword');
+  };
 
-      <View style={styles.avatarContainer}>
-      <Image
-            source={gender === 'Male' ? Male : gender === 'Female' ? Female : Default}
-            style={styles.avatar}
-          />
-<Text style={[styles.name, styles.textWithShadow]}>Welcome to my profile!</Text>
-      
-        </View>
-        <View style={styles.root}>
-          <Text style={styles.nameLabel}>Name:</Text>
-          <TextInput
-                    style={styles.input}
-                    onChangeText={onChangeName}
-                    value={name}
-                    control={control}
-                />
+  const onSignUpPress = () => {
+    navigation.navigate('SignUp');
+  };
+
+  return (
     
       <View style={styles.root}>
-        {/* <View style={styles.infoContainer}> */}
-          <Text style={styles.infoLabel}>Email:</Text>
-          <TextInput
-                    style={styles.input}
-                    onChangeText={onChangeEmail}
-                    value={email}
-                    control={control}
-                />
-        {/* </View> */}
-        <View style={styles.root}>
-        {/* <View style={styles.infoContainer}> */}
-          <Text style={styles.infoLabel}>Username:</Text>
-          <TextInput
-                    style={styles.input}
-                    onChangeText={onChangeUserName}
-                    value={username}
-                    control={control}
-                />
-        </View>
-        <View style={styles.root}>
-          <Text style={styles.infoLabel}>Contact Number:</Text>
-          <TextInput
-                    style={styles.input}
-                    onChangeText={onChangeNumber}
-                    value={number}
-                    control={control}
-                />
-        </View>
-        <View style={styles.infoContainer}>
-        <View style={styles.root}>
-          <Text style={styles.infoLabel}>Gender:</Text>
-           <Picker
-            style={styles.input1}
-            selectedValue={gender}
-            onValueChange={(itemValue, itemIndex) => setGender(itemValue)}
-             >
-            {genderOptions.map((option, index) => (
-              <Picker.Item label={option} value={option} key={index} />
-            ))}
-          </Picker>
+        <Modal
+          transparent={true}
+          animationType={'fade'}
+          visible={loading}
+          onRequestClose={() => { console.log('close modal')}}>
+          <View style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#00000040'
+          }}>
+            <ActivityIndicator animating={loading} color="#35A7FF" size="large" />
+            <Animated.Text style={{color: '#fff', opacity: fadeAnim, marginTop: 10}}>Signing In</Animated.Text>
           </View>
-        </View>
-        
-        {/* <View style={styles.root}>
-          <Text style={styles.infoLabel}>Bio:</Text>
-          <Text style={styles.infoLabel}>I have a curious mindset, and I enjoy exploring new things. Traveling to different places and experiencing new cultures fascinates me. Music is also a significant part of my life, and I find joy in discovering diverse genres and melodies.</Text>
-        </View> */}
-        
-      </View>
-     
-      <View style={styles.root}>
-       <CustomButton 
-      
-                text="Update Profile"
-                onPress={handleSubmit(onUpdateProfilePress)}
-                type="SECONDARY"
-                
-              />
-        <CustomButton
-        text="Sign Out"
-        onPress={onSignOutPressed}
+        </Modal>
+
+            <Video
+            source={{ uri: 'https://drive.google.com/uc?id=1jxYZRReov1RI-4wz_9Nh7_sPoTSyN8G2' }}
+        rate={1.5}
+        isMuted={true}
+        resizeMode="cover"
+        shouldPlay
+        isLooping
+        style={StyleSheet.absoluteFillObject}
       />
-            
-        </View>
-            
-       
-    </View>
-    </View>
-    </ScrollView>
+        
+        <Image
+          source={Logo}
+          style={[styles.logo, {height: height * 0.3}]}
+          resizeMode="contain"
+        />
+
+        <CustomInput
+          name="username"
+          value={username}
+          setValue={setUsername}
+          placeholder="Username"
+          control={control}
+          rules={{required: 'Username is required'}}
+          imageSource={Uicon} 
+          imageStyle={[styles.uicon]}
+          
+          />
+        <CustomInput
+          name="password"
+          placeholder="Password"
+          value={password}
+          setValue={setPassword}
+          secureTextEntry
+          control={control}
+          imageSource={PWicon} 
+          imageStyle={[styles.pwicon]}
+          rules={{
+            required: 'Password is required',
+            minlength: {
+              value: 3,
+              message: 'Password should be minimum 3 characters long',
+            },
+          }}
+        />
+
+        <CustomButton text="Sign In" onPress={handleSubmit(onSignInPressed)} 
+          type="SECONDARY"
+          fgColor='#000000'
+        />
+
+        <CustomButton
+          
+          text="Forgot password?"
+          onPress={onForgotPasswordPressed}
+          type="TERTIARY"
+          // imageSource={FwordIcon}
+          // imageStyle={[styles.fwicon]}          
+        />
+
+        <CustomButton
+          text="Don't have an account? Click here and create one"
+          onPress={onSignUpPress}
+          type='TERTIARY'
+          fgColor='#2126e9'
+          />
+
+        <SocialSignInButtons />
+
+
+      </View>
+    
   );
 };
 
-
 const styles = StyleSheet.create({
-    container: {
-      flexGrow: 1,
-      justifyContent: 'space-between',
-      backgroundColor: '#84cdee',
-      padding: 20,
-        
-      },
-      coverImage: {
-        height: 201,
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-      },
-      avatarContainer: {
-        alignItems: 'center',
-        marginTop: 20,
-      },
-      avatar: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-      },
-      name: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginTop: 10,
-        color:'white',
-        marginBottom: 20,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-      },
-      nameLabel: {
-        fontWeight: 'bold',
-        //marginRight: 10, // Adjust the margin to create space between label and input
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize:22
-      },
-      content: {
-        marginTop: 20,
-      },
-      infoContainer: {
-         marginTop: 10,
-        marginBottom: 20,
-      },
-      infoLabel: {
-        fontWeight: 'bold',
-        fontSize:22
-        //marginRight: 20,
-        
-      },
-      input: {
-        borderWidth: 1,
-        borderColor: '#000',
-        borderRadius: 7,
-        padding: 5,
-        fontSize: 20,
-      },
-      infoValue: {
-        marginTop: 10,
-      },
+  root: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  logo: {
+    width: '70%',
+    maxWidth: 300,
+    maxHeight: 200,
+  },
 
-    row: {
-        flex: 1,
-        flexDirection: 'row',
-        textAlign: "left",
-        display: "inline-flex",
-        alignItems: "center"
-    },
-    button: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 32,
-        borderRadius: 4,
-        elevation: 3,
-        backgroundColor: 'pink',
-        height:50
-      },
-      root: {
-        alignItems: 'center',
-        padding: 20,
-        backgroundColor:'#84cdee',
-        
-      },
-      input1: {
-        borderWidth: 20,
-        borderColor: '#000',
-        borderRadius: 20,
-        padding: -10,
-        fontSize: 15,
-       // height: 10,
-        width:140
-      },
-  });
+  uicon:{
+    width: '10%',
+    marginRight: 2,
+  },
+  pwicon:{
+    width: '8%',
+    marginRight: 2,
+  },
+  fwicon:{
+    width:'10%'
+  },
+  backgroundVideo: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  },
 
-export default ProfileScreen;
+});
+
+export default SignInScreen;
