@@ -1,4 +1,5 @@
-import React, {useState} from 'react';
+import React, {useState,  useEffect, useRef} from 'react';
+import { Video } from 'expo-av';
 import {
   View,
   Text,
@@ -8,7 +9,8 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import Logo from '../../../assets/images/Logo_2.png';
+import { Modal,ActivityIndicator,Animated} from 'react-native';
+import Logo from '../../../assets/images/Logo_3.png';
 import Uicon from '../../../assets/images/UnameIcon.png'
 import PWicon from '../../../assets/images/PwordIcon.png'
 import CustomInput from '../../components/CustomInput';
@@ -19,6 +21,7 @@ import { Auth } from 'aws-amplify';
 import {useForm, Controller} from 'react-hook-form';
 import { useRoute } from "@react-navigation/native";
 
+
 const SignInScreen = ({navigation}) => {
   const [username, setUsername] = useState();
   const [password, setPassword] = useState();
@@ -27,6 +30,24 @@ const SignInScreen = ({navigation}) => {
   const {height} = useWindowDimensions();
   // const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+  }, [fadeAnim]);
 
 
   const onSignInPressed = async data => {
@@ -64,8 +85,34 @@ const SignInScreen = ({navigation}) => {
   };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
+    
       <View style={styles.root}>
+        <Modal
+          transparent={true}
+          animationType={'fade'}
+          visible={loading}
+          onRequestClose={() => { console.log('close modal')}}>
+          <View style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#00000040'
+          }}>
+            <ActivityIndicator animating={loading} color="#35A7FF" size="large" />
+            <Animated.Text style={{color: '#fff', opacity: fadeAnim, marginTop: 10}}>Signing In</Animated.Text>
+          </View>
+        </Modal>
+
+            <Video
+            source={{ uri: 'https://drive.google.com/uc?id=1jxYZRReov1RI-4wz_9Nh7_sPoTSyN8G2' }}
+        rate={1.5}
+        isMuted={true}
+        resizeMode="cover"
+        shouldPlay
+        isLooping
+        style={StyleSheet.absoluteFillObject}
+      />
+        
         <Image
           source={Logo}
           style={[styles.logo, {height: height * 0.3}]}
@@ -103,6 +150,7 @@ const SignInScreen = ({navigation}) => {
 
         <CustomButton text="Sign In" onPress={handleSubmit(onSignInPressed)} 
           type="SECONDARY"
+          fgColor='#000000'
         />
 
         <CustomButton
@@ -114,16 +162,18 @@ const SignInScreen = ({navigation}) => {
           // imageStyle={[styles.fwicon]}          
         />
 
+        <CustomButton
+          text="Don't have an account? Click here and create one"
+          onPress={onSignUpPress}
+          type='TERTIARY'
+          fgColor='#2126e9'
+          />
+
         <SocialSignInButtons />
 
-        <CustomButton
-          text="Don't have an account? Create one"
-          onPress={onSignUpPress}
-          
-          
-        />
+
       </View>
-    </ScrollView>
+    
   );
 };
 
@@ -148,7 +198,14 @@ const styles = StyleSheet.create({
   },
   fwicon:{
     width:'10%'
-  }
+  },
+  backgroundVideo: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  },
 
 });
 
